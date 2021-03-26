@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello PAGE!{% endblock %}
+
+{% block body %}
+INFO {{ info }}
+{% for page in pages %}
+        <li>{{ page.title|e }}</li>
+    {% endfor %}
+{% endblock %}
