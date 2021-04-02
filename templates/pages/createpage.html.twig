@@ -3,8 +3,8 @@
 {% block title %}Hello PAGE!{% endblock %}
 
 {% block body %}
-INFO {{ info }}
-{% for page in pages %}
-        <li>{{ page.title|e }}</li>
-    {% endfor %}
+
+    <h3>{{ form_title }}</h3>
+    {{ form(form_product) }}
+
 {% endblock %}

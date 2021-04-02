@@ -4,9 +4,12 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Page;
 use App\Entity\Portfolio;
+use App\Form\PageType;
+
 use Symfony\Component\Validator\Constraints as Assert;
 
 
@@ -57,26 +60,86 @@ class PagesController extends AbstractController {
     }
 
     /**
-     * @Route("/createpage", name="createpage")
+     * @Route("/pages", name="pages")
      */
-    public function createpage(): Response {
-        $entityManager = $this->getDoctrine()->getManager();
-
-        $Page = new Page();
-        $Page->setTitle('Nouveau titre'.rand());
-        $Page->setContent('lorem ipsum ...');
-        $Page->setCreatedAt(new \DateTime());
-
-        $entityManager->persist($Page);
-        $entityManager->flush();
-
-        // Liste pages
+    public function pages(Request $request): Response {
         $repository = $this->getDoctrine()->getRepository(Page::class);
-        $pages = $repository->findAll();
+        $Pages = $repository->findAll();
 
-        return $this->render('pages/createpage.html.twig', [
-            'info' => 'Nouvelle page insérée '.$Page->getId(),
-            'pages' => $pages
+        // Création Form
+        $page = new Page();
+        $form = $this->createForm(PageType::class, $page);
+        $form->handleRequest($request);
+    
+        if($form->isSubmitted() && $form->isValid())
+        {
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($page);
+            $entityManager->flush();
+
+            return $this->redirectToRoute("pages");
+        }
+
+        return $this->render('pages/pages.html.twig', [
+            'title' => "Liste des pages",
+            "form_page" => $form->createView(),
+            'pages' => $Pages,
         ]);
     }
+
+    /**
+     * @Route("/createpage", name="createpage")
+     */
+    public function createpage(Request $request): Response {
+        $page = new Page();
+        $form = $this->createForm(PageType::class, $page);
+        $form->handleRequest($request);
+    
+        if($form->isSubmitted() && $form->isValid())
+        {
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($page);
+            $entityManager->flush();
+        }
+
+        return $this->render("pages/createpage.html.twig", [
+            "form_title" => "Ajouter une page",
+            "form_page" => $form->createView(),
+        ]);
+    }
+
+    /**
+     * @Route("/createpage/{id}", name="updatepage")
+     */
+    public function updatepage(Request $request, int $id): Response {
+        $entityManager = $this->getDoctrine()->getManager();
+        $page = $entityManager->getRepository(Page::class)->find($id);
+        $form = $this->createForm(PageType::class, $page);
+        $form->handleRequest($request);
+    
+        if($form->isSubmitted() && $form->isValid())
+        {
+            $entityManager->flush();
+        }
+
+        return $this->render("pages/updatepage.html.twig", [
+            "form_title" => "Modifier une page",
+            "form_page" => $form->createView(),
+        ]);
+    }
+
+    /**
+     * @Route("/delpage/{id}", name="delpage")
+     */
+    public function delpage(int $id): Response {
+        $entityManager = $this->getDoctrine()->getManager();
+        $page = $entityManager->getRepository(Page::class)->find($id);
+        
+        $entityManager->remove($page);
+        $entityManager->flush();
+
+        return $this->redirectToRoute("pages");
+    }
+
+
 }
